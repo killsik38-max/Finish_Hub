@@ -1,0 +1,1043 @@
+-- Roblox Universal UI (Updated with Menu FPS Toggle & Auto-Enable)
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
+local TweenService = game:GetService("TweenService")
+local MarketplaceService = game:GetService("MarketplaceService")
+
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+if PlayerGui:FindFirstChild("FinishedHubUltra") then
+    PlayerGui.FinishedHubUltra:Destroy()
+end
+
+local currentLang = "ru"
+
+local translations = {
+    ru = {
+        title = "⚡ FINISH IT HUB",
+        langBtn = "🌐 Язык: Русский",
+        speedText = "Скорость бега (WalkSpeed)",
+        speedLabel = "Скорость: ",
+        infJump = "Бесконечный прыжок (Infinite Jump)",
+        instPrompt = "Мгновенное взаимодействие (Proximity)",
+        autoRebuild = "Авто-перестройка (Auto Rebuild)",
+        autoUpNorm = "Авто-улучшение базы (Обычное)",
+        autoUpMax = "Авто-улучшение базы (Максимум / 10с)",
+        antiAfk = "Защита от АФК (Anti-AFK)",
+        eggEsp = "RenderedEggs ESP",
+        menuFps = "Счётчик FPS (ЭКРАН)"
+    },
+    en = {
+        title = "⚡ FINISH IT HUB",
+        langBtn = "🌐 Language: English",
+        speedText = "WalkSpeed Modifier",
+        speedLabel = "Speed: ",
+        infJump = "Infinite Jump",
+        instPrompt = "Instant Proximity Prompt",
+        autoRebuild = "Auto Rebuild",
+        autoUpNorm = "Auto Upgrade Base (Normal)",
+        autoUpMax = "Auto Upgrade Base (Maximum / 10s)",
+        antiAfk = "Anti-AFK",
+        eggEsp = "RenderedEggs ESP",
+        menuFps = "FPS Counter (SCREEN)"
+    }
+}
+
+local function getLoc(key)
+    return translations[currentLang][key] or key
+end
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "FinishedHubUltra"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.Parent = PlayerGui
+
+-- Главное окно
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 340, 0, 560)
+MainFrame.Position = UDim2.new(0.5, -170, 0.5, -280)
+MainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.ClipsDescendants = true
+MainFrame.Parent = ScreenGui
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 12)
+UICorner.Parent = MainFrame
+
+local UIStroke = Instance.new("UIStroke")
+UIStroke.Color = Color3.fromRGB(80, 80, 120)
+UIStroke.Thickness = 1.5
+UIStroke.Parent = MainFrame
+
+-- Шапка
+local TitleBar = Instance.new("Frame")
+TitleBar.Size = UDim2.new(1, 0, 0, 45)
+TitleBar.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+TitleBar.BorderSizePixel = 0
+TitleBar.Parent = MainFrame
+
+local TitleCorner = Instance.new("UICorner")
+TitleCorner.CornerRadius = UDim.new(0, 12)
+TitleCorner.Parent = TitleBar
+
+local TitleFix = Instance.new("Frame")
+TitleFix.Size = UDim2.new(1, 0, 0, 10)
+TitleFix.Position = UDim2.new(0, 0, 1, -10)
+TitleFix.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+TitleFix.BorderSizePixel = 0
+TitleFix.Parent = TitleBar
+
+local TitleText = Instance.new("TextLabel")
+TitleText.Size = UDim2.new(1, -140, 1, 0)
+TitleText.Position = UDim2.new(0, 15, 0, 0)
+TitleText.BackgroundTransparency = 1
+TitleText.Text = getLoc("title")
+TitleText.TextColor3 = Color3.fromRGB(255, 255, 255)
+TitleText.TextSize = 13
+TitleText.Font = Enum.Font.GothamBold
+TitleText.TextXAlignment = Enum.TextXAlignment.Left
+TitleText.Parent = TitleBar
+
+-- Кнопка информации «i»
+local InfoBtn = Instance.new("TextButton")
+InfoBtn.Size = UDim2.new(0, 24, 0, 22)
+InfoBtn.Position = UDim2.new(1, -108, 0.5, -11)
+InfoBtn.BackgroundColor3 = Color3.fromRGB(55, 25, 95)
+InfoBtn.Text = "i"
+InfoBtn.TextColor3 = Color3.fromRGB(220, 200, 255)
+InfoBtn.TextSize = 12
+InfoBtn.Font = Enum.Font.GothamBold
+InfoBtn.Parent = TitleBar
+
+local InfoCorner = Instance.new("UICorner")
+InfoCorner.CornerRadius = UDim.new(0, 6)
+InfoCorner.Parent = InfoBtn
+
+-- Кнопка смены ориентации
+local LayoutBtn = Instance.new("TextButton")
+LayoutBtn.Size = UDim2.new(0, 28, 0, 26)
+LayoutBtn.Position = UDim2.new(1, -66, 0.5, -13)
+LayoutBtn.BackgroundColor3 = Color3.fromRGB(0, 220, 255)
+LayoutBtn.Text = "⇄"
+LayoutBtn.TextColor3 = Color3.fromRGB(15, 15, 22)
+LayoutBtn.TextSize = 15
+LayoutBtn.Font = Enum.Font.GothamBold
+LayoutBtn.Parent = TitleBar
+
+local LayoutCorner = Instance.new("UICorner")
+LayoutCorner.CornerRadius = UDim.new(0, 6)
+LayoutCorner.Parent = LayoutBtn
+
+-- Кнопка изменения масштаба
+local SizeBtn = Instance.new("TextButton")
+SizeBtn.Size = UDim2.new(0, 28, 0, 26)
+SizeBtn.Position = UDim2.new(1, -34, 0.5, -13)
+SizeBtn.BackgroundColor3 = Color3.fromRGB(0, 220, 255)
+SizeBtn.Text = "⤢"
+SizeBtn.TextColor3 = Color3.fromRGB(15, 15, 22)
+SizeBtn.TextSize = 13
+SizeBtn.Font = Enum.Font.GothamBold
+SizeBtn.Parent = TitleBar
+
+local SizeCorner = Instance.new("UICorner")
+SizeCorner.CornerRadius = UDim.new(0, 6)
+SizeCorner.Parent = SizeBtn
+
+-- Меню информации «i»
+local InfoMenu = Instance.new("ScrollingFrame")
+InfoMenu.Name = "InfoMenu"
+InfoMenu.Size = UDim2.new(1, -16, 1, -60)
+InfoMenu.Position = UDim2.new(0, 8, 0, 52)
+InfoMenu.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
+InfoMenu.BackgroundTransparency = 0 
+InfoMenu.Visible = false
+InfoMenu.ZIndex = 10
+InfoMenu.CanvasSize = UDim2.new(0, 0, 0, 440)
+InfoMenu.ScrollBarThickness = 3
+InfoMenu.Parent = MainFrame
+
+local infoListLayout = Instance.new("UIListLayout")
+infoListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+infoListLayout.Padding = UDim.new(0, 10)
+infoListLayout.Parent = InfoMenu
+
+local infoPad = Instance.new("Frame")
+infoPad.Size = UDim2.new(1, 0, 0, 2)
+infoPad.BackgroundTransparency = 1
+infoPad.Parent = InfoMenu
+
+local function createInfoCard(titleText, valueText, accentColor)
+    local card = Instance.new("Frame")
+    card.Size = UDim2.new(1, -10, 0, 52)
+    card.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
+    card.ZIndex = 11
+    card.Parent = InfoMenu
+    
+    local cCorner = Instance.new("UICorner")
+    cCorner.CornerRadius = UDim.new(0, 8)
+    cCorner.Parent = card
+    
+    local cStroke = Instance.new("UIStroke")
+    cStroke.Color = Color3.fromRGB(45, 45, 65)
+    cStroke.Thickness = 1
+    cStroke.Parent = card
+    
+    local line = Instance.new("Frame")
+    line.Size = UDim2.new(0, 3, 1, -12)
+    line.Position = UDim2.new(0, 0, 0, 6)
+    line.BackgroundColor3 = accentColor or Color3.fromRGB(0, 220, 255)
+    line.BorderSizePixel = 0
+    line.ZIndex = 11
+    line.Parent = card
+    
+    local tLbl = Instance.new("TextLabel")
+    tLbl.Size = UDim2.new(1, -20, 0, 18)
+    tLbl.Position = UDim2.new(0, 12, 0, 7)
+    tLbl.BackgroundTransparency = 1
+    tLbl.Text = titleText
+    tLbl.TextColor3 = Color3.fromRGB(140, 140, 165)
+    tLbl.TextSize = 11
+    tLbl.Font = Enum.Font.GothamMedium
+    tLbl.TextXAlignment = Enum.TextXAlignment.Left
+    tLbl.ZIndex = 11
+    tLbl.Parent = card
+    
+    local vLbl = Instance.new("TextLabel")
+    vLbl.Size = UDim2.new(1, -20, 0, 20)
+    vLbl.Position = UDim2.new(0, 12, 0, 25)
+    vLbl.BackgroundTransparency = 1
+    vLbl.Text = valueText
+    vLbl.TextColor3 = Color3.fromRGB(240, 240, 255)
+    vLbl.TextSize = 13
+    vLbl.Font = Enum.Font.GothamBold
+    vLbl.TextXAlignment = Enum.TextXAlignment.Left
+    vLbl.ZIndex = 11
+    vLbl.Parent = card
+    
+    return card, vLbl
+end
+
+createInfoCard("ИГРОК / NICKNAME", LocalPlayer.Name, Color3.fromRGB(0, 220, 255))
+
+local gameNameText = "Загрузка..."
+pcall(function()
+    local info = MarketplaceService:GetProductInfo(game.PlaceId)
+    gameNameText = info.Name
+end)
+createInfoCard("ТЕКУЩАЯ ИГРА / GAME", gameNameText, Color3.fromRGB(180, 80, 255))
+
+local _, sessionCardVal = createInfoCard("ВРЕМЯ СЕССИИ / SESSION TIME", "00:00:00", Color3.fromRGB(0, 255, 120))
+local startTime = tick()
+
+task.spawn(function()
+    while true do
+        local diff = math.floor(tick() - startTime)
+        local hours = math.floor(diff / 3600)
+        local mins = math.floor((diff % 3600) / 60)
+        local secs = diff % 60
+        sessionCardVal.Text = string.format("%02d:%02d:%02d", hours, mins, secs)
+        task.wait(1)
+    end
+end)
+
+-- Создаём карточку FPS прямо под временем сессии с кнопкой Вкл/Выкл (по умолчанию ВКЛЮЧЕНА)
+local FpsMenuCard = Instance.new("Frame")
+FpsMenuCard.Size = UDim2.new(1, -10, 0, 52)
+FpsMenuCard.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
+FpsMenuCard.ZIndex = 11
+FpsMenuCard.Parent = InfoMenu
+
+local fCardCorner = Instance.new("UICorner")
+fCardCorner.CornerRadius = UDim.new(0, 8)
+fCardCorner.Parent = FpsMenuCard
+
+local fCardStroke = Instance.new("UIStroke")
+fCardStroke.Color = Color3.fromRGB(45, 45, 65)
+fCardStroke.Thickness = 1
+fCardStroke.Parent = FpsMenuCard
+
+local fCardLine = Instance.new("Frame")
+fCardLine.Size = UDim2.new(0, 3, 1, -12)
+fCardLine.Position = UDim2.new(0, 0, 0, 6)
+fCardLine.BackgroundColor3 = Color3.fromRGB(255, 165, 0)
+fCardLine.BorderSizePixel = 0
+fCardLine.ZIndex = 11
+fCardLine.Parent = FpsMenuCard
+
+local fCardTitle = Instance.new("TextLabel")
+fCardTitle.Size = UDim2.new(0.65, -15, 0, 18)
+fCardTitle.Position = UDim2.new(0, 12, 0, 7)
+fCardTitle.BackgroundTransparency = 1
+fCardTitle.Text = "FPS"
+fCardTitle.TextColor3 = Color3.fromRGB(140, 140, 165)
+fCardTitle.TextSize = 11
+fCardTitle.Font = Enum.Font.GothamMedium
+fCardTitle.TextXAlignment = Enum.TextXAlignment.Left
+fCardTitle.ZIndex = 11
+fCardTitle.Parent = FpsMenuCard
+
+local fCardVal = Instance.new("TextLabel")
+fCardVal.Size = UDim2.new(0.65, -15, 0, 20)
+fCardVal.Position = UDim2.new(0, 12, 0, 25)
+fCardVal.BackgroundTransparency = 1
+fCardVal.Text = "60 FPS"
+fCardVal.TextColor3 = Color3.fromRGB(0, 255, 120)
+fCardVal.TextSize = 13
+fCardVal.Font = Enum.Font.GothamBold
+fCardVal.TextXAlignment = Enum.TextXAlignment.Left
+fCardVal.ZIndex = 11
+fCardVal.Parent = FpsMenuCard
+
+-- Переключатель в карточке (Тумблер)
+local FpsToggleBtn = Instance.new("TextButton")
+FpsToggleBtn.Size = UDim2.new(0, 56, 0, 26)
+FpsToggleBtn.Position = UDim2.new(1, -66, 0.5, -13)
+FpsToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 100) -- Включен по умолчанию
+FpsToggleBtn.Text = ""
+FpsToggleBtn.ZIndex = 11
+FpsToggleBtn.Parent = FpsMenuCard
+
+local fBtnCorner = Instance.new("UICorner")
+fBtnCorner.CornerRadius = UDim.new(1, 0)
+fBtnCorner.Parent = FpsToggleBtn
+
+local FpsCircle = Instance.new("Frame")
+FpsCircle.Size = UDim2.new(0, 20, 0, 20)
+FpsCircle.Position = UDim2.new(1, -23, 0.5, -10) -- Позиция включено
+FpsCircle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+FpsCircle.ZIndex = 11
+FpsCircle.Parent = FpsToggleBtn
+
+local fCircleCorner = Instance.new("UICorner")
+fCircleCorner.CornerRadius = UDim.new(1, 0)
+fCircleCorner.Parent = FpsCircle
+
+-- Создание плавающего счётчика FPS на экране (По умолчанию активен)
+local ScreenFpsWidget = Instance.new("TextLabel")
+ScreenFpsWidget.Name = "ScreenFpsWidget"
+ScreenFpsWidget.Size = UDim2.new(0, 110, 0, 32)
+ScreenFpsWidget.Position = UDim2.new(0, 25, 0, 95)
+ScreenFpsWidget.BackgroundColor3 = Color3.fromRGB(15, 15, 22)
+ScreenFpsWidget.TextColor3 = Color3.fromRGB(0, 255, 120)
+ScreenFpsWidget.TextSize = 13
+ScreenFpsWidget.Font = Enum.Font.GothamBold
+ScreenFpsWidget.Text = "FPS: 60"
+ScreenFpsWidget.Active = true
+ScreenFpsWidget.Draggable = true
+ScreenFpsWidget.Parent = ScreenGui
+
+local sFpsCorner = Instance.new("UICorner")
+sFpsCorner.CornerRadius = UDim.new(0, 8)
+sFpsCorner.Parent = ScreenFpsWidget
+
+local sFpsStroke = Instance.new("UIStroke")
+sFpsStroke.Color = Color3.fromRGB(60, 60, 90)
+sFpsStroke.Thickness = 1
+sFpsStroke.Parent = ScreenFpsWidget
+
+local fpsScreenActive = true
+
+FpsToggleBtn.MouseButton1Click:Connect(function()
+    fpsScreenActive = not fpsScreenActive
+    if fpsScreenActive then
+        TweenService:Create(FpsToggleBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(0, 200, 100)}):Play()
+        TweenService:Create(FpsCircle, TweenInfo.new(0.2), {Position = UDim2.new(1, -23, 0.5, -10), BackgroundColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+        ScreenFpsWidget.Parent = ScreenGui
+    else
+        TweenService:Create(FpsToggleBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(45, 45, 60)}):Play()
+        TweenService:Create(FpsCircle, TweenInfo.new(0.2), {Position = UDim2.new(0, 3, 0.5, -10), BackgroundColor3 = Color3.fromRGB(220, 220, 230)}):Play()
+        ScreenFpsWidget.Parent = nil
+    end
+end)
+
+-- Обновление значений FPS
+local lastTick = tick()
+local frameCount = 0
+RunService.RenderStepped:Connect(function()
+    frameCount = frameCount + 1
+    local currentTick = tick()
+    if currentTick - lastTick >= 0.5 then
+        local fps = math.floor(frameCount / (currentTick - lastTick) + 0.5)
+        local fpsString = "FPS: " .. tostring(fps)
+        fCardVal.Text = tostring(fps) .. " FPS"
+        ScreenFpsWidget.Text = fpsString
+        frameCount = 0
+        lastTick = currentTick
+    end
+end)
+
+local LangToggleBtn = Instance.new("TextButton")
+LangToggleBtn.Size = UDim2.new(1, -10, 0, 42)
+LangToggleBtn.BackgroundColor3 = Color3.fromRGB(45, 25, 80)
+LangToggleBtn.Text = getLoc("langBtn")
+LangToggleBtn.TextColor3 = Color3.fromRGB(230, 220, 255)
+LangToggleBtn.TextSize = 12
+LangToggleBtn.Font = Enum.Font.GothamBold
+LangToggleBtn.ZIndex = 11
+LangToggleBtn.Parent = InfoMenu
+
+local langCorner = Instance.new("UICorner")
+langCorner.CornerRadius = UDim.new(0, 8)
+langCorner.Parent = LangToggleBtn
+
+local UI13Texts = {}
+
+LangToggleBtn.MouseButton1Click:Connect(function()
+    currentLang = (currentLang == "ru") and "en" or "ru"
+    LangToggleBtn.Text = getLoc("langBtn")
+    TitleText.Text = getLoc("title")
+    for _, item in pairs(UI13Texts) do
+        if item.type == "toggle" then
+            item.label.Text = getLoc(item.key)
+        elseif item.type == "speed" then
+            item.label.Text = getLoc(item.key)
+        end
+    end
+end)
+
+InfoBtn.MouseButton1Click:Connect(function()
+    InfoMenu.Visible = not InfoMenu.Visible
+end)
+
+local isLandscape = false
+local isExpanded = false
+
+local function updateWindowSize()
+    local targetWidth, targetHeight = 340, 560
+    if isLandscape then targetWidth, targetHeight = 580, 360 end
+    if isExpanded then targetWidth, targetHeight = targetWidth + 100, targetHeight + 100 end
+    
+    TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        Size = UDim2.new(0, targetWidth, 0, targetHeight),
+        Position = UDim2.new(0.5, -targetWidth / 2, 0.5, -targetHeight / 2)
+    }):Play()
+end
+
+LayoutBtn.MouseButton1Click:Connect(function()
+    isLandscape = not isLandscape
+    LayoutBtn.Text = isLandscape and "↕" or "⇄"
+    updateWindowSize()
+end)
+
+SizeBtn.MouseButton1Click:Connect(function()
+    isExpanded = not isExpanded
+    SizeBtn.Text = isExpanded and "⤡" or "⤢"
+    updateWindowSize()
+end)
+
+-- Кнопка сворачивания
+local ToggleButton = Instance.new("TextButton")
+ToggleButton.Name = "ToggleButton"
+ToggleButton.Size = UDim2.new(0, 55, 0, 55)
+ToggleButton.Position = UDim2.new(0, 25, 0.08, 0)
+ToggleButton.BackgroundColor3 = Color3.fromRGB(22, 22, 30)
+ToggleButton.Text = "FINISH"
+ToggleButton.TextColor3 = Color3.fromRGB(220, 225, 240)
+ToggleButton.TextSize = 10
+ToggleButton.Font = Enum.Font.GothamBold
+ToggleButton.Active = true
+ToggleButton.Draggable = true
+ToggleButton.Parent = ScreenGui
+
+local ToggleCorner = Instance.new("UICorner")
+ToggleCorner.CornerRadius = UDim.new(1, 0)
+ToggleCorner.Parent = ToggleButton
+
+local ToggleStroke = Instance.new("UIStroke")
+ToggleStroke.Color = Color3.fromRGB(100, 100, 140)
+ToggleStroke.Thickness = 1.5
+ToggleStroke.Parent = ToggleButton
+
+local uiVisible = true
+ToggleButton.MouseButton1Click:Connect(function()
+    uiVisible = not uiVisible
+    if uiVisible then
+        MainFrame.Visible = true
+        updateWindowSize()
+    else
+        local tw = TweenService:Create(MainFrame, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.new(0, 0, 0, 0)})
+        tw:Play()
+        tw.Completed:Connect(function()
+            if not uiVisible then MainFrame.Visible = false end
+        end)
+    end
+end)
+
+local ScrollingFrame = Instance.new("ScrollingFrame")
+ScrollingFrame.Size = UDim2.new(1, -16, 1, -60)
+ScrollingFrame.Position = UDim2.new(0, 8, 0, 52)
+ScrollingFrame.BackgroundTransparency = 1
+ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 1300)
+ScrollingFrame.ScrollBarThickness = 3
+ScrollingFrame.ScrollBarImageColor3 = Color3.fromRGB(0, 240, 255)
+ScrollingFrame.Parent = MainFrame
+
+local UIListLayout = Instance.new("UIListLayout")
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayout.Padding = UDim.new(0, 8)
+UIListLayout.Parent = ScrollingFrame
+
+local function createToggle(langKey, defaultState, callback)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, -6, 0, 46)
+    frame.BackgroundColor3 = Color3.fromRGB(24, 24, 32)
+    frame.Parent = ScrollingFrame
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = frame
+    
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(45, 45, 60)
+    stroke.Thickness = 1
+    stroke.Parent = frame
+    
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0.65, 0, 1, 0)
+    label.Position = UDim2.new(0, 14, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = getLoc(langKey)
+    label.TextColor3 = Color3.fromRGB(240, 240, 245)
+    label.TextSize = 13
+    label.Font = Enum.Font.GothamMedium
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = frame
+    
+    table.insert(UI13Texts, {type = "toggle", key = langKey, label = label})
+    
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 64, 0, 28)
+    btn.Position = UDim2.new(1, -74, 0.5, -14)
+    btn.BackgroundColor3 = Color3.fromRGB(45, 45, 60)
+    btn.Text = ""
+    btn.Parent = frame
+    
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(1, 0)
+    btnCorner.Parent = btn
+    
+    local circle = Instance.new("Frame")
+    circle.Size = UDim2.new(0, 22, 0, 22)
+    circle.Position = UDim2.new(0, 3, 0.5, -11)
+    circle.BackgroundColor3 = Color3.fromRGB(220, 220, 230)
+    circle.Parent = btn
+    
+    local circleCorner = Instance.new("UICorner")
+    circleCorner.CornerRadius = UDim.new(1, 0)
+    circleCorner.Parent = circle
+    
+    local active = false
+    
+    local function setToggleState(state)
+        if active == state then return end
+        active = state
+        
+        if active then
+            btn.BackgroundColor3 = Color3.fromRGB(0, 200, 100)
+            circle.Position = UDim2.new(1, -25, 0.5, -11)
+            circle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            task.spawn(function()
+                callback(function() return active end)
+            end)
+        else
+            btn.BackgroundColor3 = Color3.fromRGB(45, 45, 60)
+            circle.Position = UDim2.new(0, 3, 0.5, -11)
+            circle.BackgroundColor3 = Color3.fromRGB(220, 220, 230)
+        end
+    end
+    
+    btn.MouseButton1Click:Connect(function()
+        setToggleState(not active)
+    end)
+    
+    if defaultState then
+        setToggleState(true)
+    end
+    
+    return frame, btn, function() return active end
+end
+
+-- 1. RenderedEggs ESP
+local eggData = {}
+local selectedEggTypes = {}
+
+local eggFrame = Instance.new("Frame")
+eggFrame.Size = UDim2.new(1, -6, 0, 190)
+eggFrame.BackgroundColor3 = Color3.fromRGB(24, 24, 32)
+eggFrame.Parent = ScrollingFrame
+
+local eggCorner = Instance.new("UICorner")
+eggCorner.CornerRadius = UDim.new(0, 8)
+eggCorner.Parent = eggFrame
+
+local eggStroke = Instance.new("UIStroke")
+eggStroke.Color = Color3.fromRGB(45, 45, 60)
+eggStroke.Thickness = 1
+eggStroke.Parent = eggFrame
+
+local eggLabel = Instance.new("TextLabel")
+eggLabel.Size = UDim2.new(0.6, 0, 0, 45)
+eggLabel.Position = UDim2.new(0, 14, 0, 0)
+eggLabel.BackgroundTransparency = 1
+eggLabel.Text = getLoc("eggEsp")
+eggLabel.TextColor3 = Color3.fromRGB(240, 240, 245)
+eggLabel.TextSize = 13
+eggLabel.Font = Enum.Font.GothamMedium
+eggLabel.TextXAlignment = Enum.TextXAlignment.Left
+eggLabel.Parent = eggFrame
+
+table.insert(UI13Texts, {type = "toggle", key = "eggEsp", label = eggLabel})
+
+local eggToggleBtn = Instance.new("TextButton")
+eggToggleBtn.Size = UDim2.new(0, 64, 0, 28)
+eggToggleBtn.Position = UDim2.new(1, -74, 0, 9)
+eggToggleBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 60)
+eggToggleBtn.Text = ""
+eggToggleBtn.Parent = eggFrame
+
+local eggBtnCorner = Instance.new("UICorner")
+eggBtnCorner.CornerRadius = UDim.new(1, 0)
+eggBtnCorner.Parent = eggToggleBtn
+
+local eggCircle = Instance.new("Frame")
+eggCircle.Size = UDim2.new(0, 22, 0, 22)
+eggCircle.Position = UDim2.new(0, 3, 0.5, -11)
+eggCircle.BackgroundColor3 = Color3.fromRGB(220, 220, 230)
+eggCircle.Parent = eggToggleBtn
+
+local eggCircleCorner = Instance.new("UICorner")
+eggCircleCorner.CornerRadius = UDim.new(1, 0)
+eggCircleCorner.Parent = eggCircle
+
+local eggListContainer = Instance.new("ScrollingFrame")
+eggListContainer.Size = UDim2.new(1, -20, 0, 120)
+eggListContainer.Position = UDim2.new(0, 10, 0, 55)
+eggListContainer.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+eggListContainer.BorderSizePixel = 0
+eggListContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
+eggListContainer.ScrollBarThickness = 3
+eggListContainer.Parent = eggFrame
+
+local eggListCorner = Instance.new("UICorner")
+eggListCorner.CornerRadius = UDim.new(0, 6)
+eggListCorner.Parent = eggListContainer
+
+local eggListLayout = Instance.new("UIListLayout")
+eggListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+eggListLayout.Padding = UDim.new(0, 4)
+eggListLayout.Parent = eggListContainer
+
+local eggActive = false
+
+local function getUniqueColor(str)
+    local hash = 0
+    for i = 1, #str do
+        hash = (hash * 31 + string.byte(str, i)) % 360
+    end
+    return Color3.fromHSV(hash / 360, 0.9, 1)
+end
+
+eggToggleBtn.MouseButton1Click:Connect(function()
+    eggActive = not eggActive
+    if eggActive then
+        TweenService:Create(eggToggleBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(0, 200, 100)}):Play()
+        TweenService:Create(eggCircle, TweenInfo.new(0.2), {Position = UDim2.new(1, -25, 0.5, -11), BackgroundColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+    else
+        TweenService:Create(eggToggleBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(45, 45, 60)}):Play()
+        TweenService:Create(eggCircle, TweenInfo.new(0.2), {Position = UDim2.new(0, 3, 0.5, -11), BackgroundColor3 = Color3.fromRGB(220, 220, 230)}):Play()
+        for _, data in pairs(eggData) do
+            if data.Highlight then data.Highlight:Destroy() end
+            if data.Billboard then data.Billboard:Destroy() end
+        end
+        eggData = {}
+    end
+end)
+
+RunService.Heartbeat:Connect(function()
+    if not eggActive then return end
+    local folder = Workspace:FindFirstChild("RenderedEggs", true)
+    if not folder then return end
+    
+    for _, egg in ipairs(folder:GetChildren()) do
+        if egg:IsA("Model") or egg:IsA("BasePart") then
+            if selectedEggTypes[egg.Name] == nil then
+                selectedEggTypes[egg.Name] = true
+                
+                local checkBtn = Instance.new("TextButton")
+                checkBtn.Size = UDim2.new(1, 0, 0, 24)
+                checkBtn.BackgroundColor3 = Color3.fromRGB(30, 180, 90)
+                checkBtn.Text = "  [✓] " .. egg.Name
+                checkBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                checkBtn.TextSize = 11
+                checkBtn.Font = Enum.Font.GothamMedium
+                checkBtn.TextXAlignment = Enum.TextXAlignment.Left
+                checkBtn.Parent = eggListContainer
+                
+                local checkCorner = Instance.new("UICorner")
+                checkCorner.CornerRadius = UDim.new(0, 4)
+                checkCorner.Parent = checkBtn
+                
+                eggListContainer.CanvasSize = UDim2.new(0, 0, 0, eggListLayout.AbsoluteContentSize.Y)
+                
+                checkBtn.MouseButton1Click:Connect(function()
+                    selectedEggTypes[egg.Name] = not selectedEggTypes[egg.Name]
+                    if selectedEggTypes[egg.Name] then
+                        checkBtn.BackgroundColor3 = Color3.fromRGB(30, 180, 90)
+                        checkBtn.Text = "  [✓] " .. egg.Name
+                    else
+                        checkBtn.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
+                        checkBtn.Text = "  [X] " .. egg.Name
+                    end
+                end)
+            end
+            
+            if selectedEggTypes[egg.Name] == true then
+                if not eggData[egg] then
+                    local data = {}
+                    local highlight = Instance.new("Highlight")
+                    highlight.Adornee = egg
+                    highlight.FillColor = getUniqueColor(egg.Name)
+                    highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+                    highlight.Parent = ScreenGui
+                    data.Highlight = highlight
+                    
+                    local billboard = Instance.new("BillboardGui")
+                    billboard.Adornee = egg:IsA("Model") and (egg.PrimaryPart or egg:FindFirstChildWhichIsA("BasePart")) or egg
+                    billboard.Size = UDim2.new(0, 200, 0, 50)
+                    billboard.StudsOffset = Vector3.new(0, 3, 0)
+                    billboard.AlwaysOnTop = true
+                    billboard.MaxDistance = 100000
+                    
+                    local textLabel = Instance.new("TextLabel")
+                    textLabel.Size = UDim2.new(1, 0, 1, 0)
+                    textLabel.BackgroundTransparency = 1
+                    textLabel.Text = egg.Name
+                    textLabel.TextColor3 = highlight.FillColor
+                    textLabel.TextStrokeTransparency = 0
+                    textLabel.TextSize = 14
+                    textLabel.Font = Enum.Font.GothamBold
+                    textLabel.Parent = billboard
+                    
+                    billboard.Parent = ScreenGui
+                    data.Billboard = billboard
+                    eggData[egg] = data
+                end
+            else
+                if eggData[egg] then
+                    if eggData[egg].Highlight then eggData[egg].Highlight:Destroy() end
+                    if eggData[egg].Billboard then eggData[egg].Billboard:Destroy() end
+                    eggData[egg] = nil
+                end
+            end
+        end
+    end
+end)
+
+-- 2. WalkSpeed Modifier
+local speedFrame = Instance.new("Frame")
+speedFrame.Size = UDim2.new(1, -6, 0, 46)
+speedFrame.BackgroundColor3 = Color3.fromRGB(24, 24, 32)
+speedFrame.Parent = ScrollingFrame
+
+local speedCorner = Instance.new("UICorner")
+speedCorner.CornerRadius = UDim.new(0, 8)
+speedCorner.Parent = speedFrame
+
+local speedStroke = Instance.new("UIStroke")
+speedStroke.Color = Color3.fromRGB(45, 45, 60)
+speedStroke.Thickness = 1
+speedStroke.Parent = speedFrame
+
+local speedLabel = Instance.new("TextLabel")
+speedLabel.Size = UDim2.new(0.5, 0, 1, 0)
+speedLabel.Position = UDim2.new(0, 14, 0, 0)
+speedLabel.BackgroundTransparency = 1
+speedLabel.Text = getLoc("speedText")
+speedLabel.TextColor3 = Color3.fromRGB(240, 240, 245)
+speedLabel.TextSize = 13
+speedLabel.Font = Enum.Font.GothamMedium
+speedLabel.TextXAlignment = Enum.TextXAlignment.Left
+speedLabel.Parent = speedFrame
+
+table.insert(UI13Texts, {type = "speed", key = "speedText", label = speedLabel})
+
+local speedMenuBtn = Instance.new("TextButton")
+speedMenuBtn.Size = UDim2.new(0, 32, 0, 28)
+speedMenuBtn.Position = UDim2.new(1, -114, 0.5, -14)
+speedMenuBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
+speedMenuBtn.Text = "⚙"
+speedMenuBtn.TextColor3 = Color3.fromRGB(220, 220, 240)
+speedMenuBtn.TextSize = 14
+speedMenuBtn.Parent = speedFrame
+
+local speedMenuCorner = Instance.new("UICorner")
+speedMenuCorner.CornerRadius = UDim.new(0, 6)
+speedMenuCorner.Parent = speedMenuBtn
+
+local speedToggleBtn = Instance.new("TextButton")
+speedToggleBtn.Size = UDim2.new(0, 64, 0, 28)
+speedToggleBtn.Position = UDim2.new(1, -74, 0.5, -14)
+speedToggleBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 60)
+speedToggleBtn.Text = ""
+speedToggleBtn.Parent = speedFrame
+
+local speedToggleCorner = Instance.new("UICorner")
+speedToggleCorner.CornerRadius = UDim.new(1, 0)
+speedToggleCorner.Parent = speedToggleBtn
+
+local speedCircle = Instance.new("Frame")
+speedCircle.Size = UDim2.new(0, 22, 0, 22)
+speedCircle.Position = UDim2.new(0, 3, 0.5, -11)
+speedCircle.BackgroundColor3 = Color3.fromRGB(220, 220, 230)
+speedCircle.Parent = speedToggleBtn
+
+local speedCircleCorner = Instance.new("UICorner")
+speedCircleCorner.CornerRadius = UDim.new(1, 0)
+speedCircleCorner.Parent = speedCircle
+
+local speedSubContainer = Instance.new("Frame")
+speedSubContainer.Size = UDim2.new(1, -6, 0, 56)
+speedSubContainer.BackgroundColor3 = Color3.fromRGB(20, 20, 26)
+speedSubContainer.Visible = false
+speedSubContainer.Parent = ScrollingFrame
+
+local speedSubCorner = Instance.new("UICorner")
+speedSubCorner.CornerRadius = UDim.new(0, 8)
+speedSubCorner.Parent = speedSubContainer
+
+local sliderVal = 16
+local sliderBar = Instance.new("Frame")
+sliderBar.Size = UDim2.new(1, -30, 0, 8)
+sliderBar.Position = UDim2.new(0, 15, 0, 34)
+sliderBar.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
+sliderBar.Parent = speedSubContainer
+
+local sliderBarCorner = Instance.new("UICorner")
+sliderBarCorner.CornerRadius = UDim.new(1, 0)
+sliderBarCorner.Parent = sliderBar
+
+local sliderFill = Instance.new("Frame")
+sliderFill.Size = UDim2.new(0, 0, 1, 0)
+sliderFill.BackgroundColor3 = Color3.fromRGB(0, 220, 255)
+sliderFill.Parent = sliderBar
+
+local sliderFillCorner = Instance.new("UICorner")
+sliderFillCorner.CornerRadius = UDim.new(1, 0)
+sliderFillCorner.Parent = sliderFill
+
+local sliderKnob = Instance.new("Frame")
+sliderKnob.Size = UDim2.new(0, 16, 0, 16)
+sliderKnob.Position = UDim2.new(1, -8, 0.5, -8)
+sliderKnob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+sliderKnob.Parent = sliderFill
+
+local sliderKnobCorner = Instance.new("UICorner")
+sliderKnobCorner.CornerRadius = UDim.new(1, 0)
+sliderKnobCorner.Parent = sliderKnob
+
+local sliderText = Instance.new("TextLabel")
+sliderText.Size = UDim2.new(1, 0, 0, 20)
+sliderText.Position = UDim2.new(0, 0, 0, 8)
+sliderText.BackgroundTransparency = 1
+sliderText.Text = getLoc("speedLabel") .. math.floor(sliderVal)
+sliderText.TextColor3 = Color3.fromRGB(200, 200, 220)
+sliderText.TextSize = 12
+sliderText.Font = Enum.Font.GothamMedium
+sliderText.Parent = speedSubContainer
+
+speedMenuBtn.MouseButton1Click:Connect(function()
+    speedSubContainer.Visible = not speedSubContainer.Visible
+end)
+
+local function setSpeedValue(val)
+    sliderVal = math.clamp(val, 16, 500)
+    local pos = (sliderVal - 16) / (500 - 16)
+    sliderFill.Size = UDim2.new(pos, 0, 1, 0)
+    sliderText.Text = getLoc("speedLabel") .. math.floor(sliderVal)
+end
+
+setSpeedValue(sliderVal)
+
+local speedActive = false
+speedToggleBtn.MouseButton1Click:Connect(function()
+    speedActive = not speedActive
+    if speedActive then
+        TweenService:Create(speedToggleBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(0, 200, 100)}):Play()
+        TweenService:Create(speedCircle, TweenInfo.new(0.2), {Position = UDim2.new(1, -25, 0.5, -11), BackgroundColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+    else
+        TweenService:Create(speedToggleBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(45, 45, 60)}):Play()
+        TweenService:Create(speedCircle, TweenInfo.new(0.2), {Position = UDim2.new(0, 3, 0.5, -11), BackgroundColor3 = Color3.fromRGB(220, 220, 230)}):Play()
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+            LocalPlayer.Character.Humanoid.WalkSpeed = 16
+        end
+    end
+end)
+
+RunService.RenderStepped:Connect(function()
+    if speedActive and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid.WalkSpeed = sliderVal
+    end
+end)
+
+local draggingSlider = false
+sliderBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        draggingSlider = true
+    end
+end)
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        draggingSlider = false
+    end
+end)
+UserInputService.InputChanged:Connect(function(input)
+    if draggingSlider and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local pos = math.clamp((input.Position.X - sliderBar.AbsolutePosition.X) / sliderBar.AbsoluteSize.X, 0, 1)
+        setSpeedValue(16 + pos * (500 - 16))
+    end
+end)
+
+-- 3. Infinite Jump
+createToggle("infJump", false, function(isActive)
+    local jumpConn
+    jumpConn = UserInputService.JumpRequest:Connect(function()
+        if isActive() and LocalPlayer.Character then
+            local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+            end
+        end
+    end)
+    while isActive() do task.wait(0.5) end
+    if jumpConn then jumpConn:Disconnect() end
+end)
+
+-- 4. Instant Proximity Prompt
+local originalPromptData = {}
+createToggle("instPrompt", false, function(isActive)
+    while isActive() do
+        pcall(function()
+            for _, v in pairs(Workspace:GetDescendants()) do
+                if not isActive() then break end
+                if v:IsA("ProximityPrompt") then
+                    if not originalPromptData[v] then
+                        originalPromptData[v] = {HoldDuration = v.HoldDuration, MaxActivationDistance = v.MaxActivationDistance}
+                    end
+                    v.HoldDuration = 0
+                end
+            end
+        end)
+        local t = 0
+        while t < 1 and isActive() do task.wait(0.2) t = t + 0.2 end
+    end
+    pcall(function()
+        for v, data in pairs(originalPromptData) do
+            if v and v.Parent then
+                v.HoldDuration = data.HoldDuration
+                v.MaxActivationDistance = data.MaxActivationDistance
+            end
+        end
+        originalPromptData = {}
+    end)
+end)
+
+-- 5. Auto Rebuild
+createToggle("autoRebuild", false, function(isActive)
+    pcall(function()
+        local remotes = ReplicatedStorage:FindFirstChild("Remotes", true) and ReplicatedStorage.Remotes:FindFirstChild("Game")
+        if remotes then
+            if remotes:FindFirstChild("RebirthHintSeen") then remotes.RebirthHintSeen:FireServer() end
+            if remotes:FindFirstChild("Rebirth") then remotes.Rebirth:FireServer() end
+        end
+    end)
+    while isActive() do
+        local elapsed = 0
+        while elapsed < 1800 and isActive() do task.wait(1) elapsed = elapsed + 1 end
+        if not isActive() then break end
+        pcall(function()
+            local remotes = ReplicatedStorage:FindFirstChild("Remotes", true) and ReplicatedStorage.Remotes:FindFirstChild("Game")
+            if remotes then
+                if remotes:FindFirstChild("RebirthHintSeen") then remotes.RebirthHintSeen:FireServer() end
+                if remotes:FindFirstChild("Rebirth") then remotes.Rebirth:FireServer() end
+            end
+        end)
+    end
+end)
+
+-- 6. Auto Upgrade Base (Normal)
+createToggle("autoUpNorm", false, function(isActive)
+    while isActive() do
+        pcall(function()
+            for _, remote in pairs(ReplicatedStorage:GetDescendants()) do
+                if not isActive() then break end
+                if remote:IsA("RemoteEvent") and (string.lower(remote.Name):find("upgrade") or string.lower(remote.Name):find("buy") or string.lower(remote.Name):find("farm")) then
+                    remote:FireServer()
+                elseif remote:IsA("RemoteFunction") and (string.lower(remote.Name):find("upgrade") or string.lower(remote.Name):find("buy") or string.lower(remote.Name):find("farm")) then
+                    remote:InvokeServer()
+                end
+            end
+            for _, v in pairs(Workspace:GetDescendants()) do
+                if not isActive() then break end
+                if v:IsA("ProximityPrompt") and (string.lower(v.ActionText):find("upgrade") or string.lower(v.ObjectText):find("upgrade") or string.lower(v.Name):find("upgrade")) then
+                    fireproximityprompt(v)
+                end
+            end
+        end)
+        if not isActive() then break end
+        local t = 0
+        while t < 1 and isActive() do task.wait(0.2) t = t + 0.2 end
+    end
+end)
+
+-- 7. Auto Upgrade Base (Maximum / 10с)
+createToggle("autoUpMax", false, function(isActive)
+    while isActive() do
+        pcall(function()
+            for _, remote in pairs(ReplicatedStorage:GetDescendants()) do
+                if not isActive() then break end
+                if remote:IsA("RemoteEvent") and (string.lower(remote.Name):find("upgrade") or string.lower(remote.Name):find("buy") or string.lower(remote.Name):find("farm") or string.lower(remote.Name):find("max")) then
+                    remote:FireServer("Max")
+                    remote:FireServer(true)
+                    remote:FireServer()
+                elseif remote:IsA("RemoteFunction") and (string.lower(remote.Name):find("upgrade") or string.lower(remote.Name):find("buy") or string.lower(remote.Name):find("farm") or string.lower(remote.Name):find("max")) then
+                    remote:InvokeServer("Max")
+                    remote:InvokeServer()
+                end
+            end
+            for _, v in pairs(Workspace:GetDescendants()) do
+                if not isActive() then break end
+                if v:IsA("ProximityPrompt") and (string.lower(v.ActionText):find("upgrade") or string.lower(v.ObjectText):find("upgrade") or string.lower(v.Name):find("upgrade") or string.lower(v.ActionText):find("max")) then
+                    fireproximityprompt(v)
+                end
+            end
+        end)
+        if not isActive() then break end
+        task.wait(10)
+    end
+end)
+
+-- 8. Anti-AFK
+createToggle("antiAfk", true, function(isActive)
+    local vu = game:GetService("VirtualUser")
+    local connection
+    connection = LocalPlayer.Idled:Connect(function()
+        if isActive() then
+            vu:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+            task.wait(1)
+            vu:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+        end
+    end)
+    while isActive() do task.wait(1) end
+    if connection then connection:Disconnect() end
+end)
+
+print("Finished Hub successfully loaded!")
